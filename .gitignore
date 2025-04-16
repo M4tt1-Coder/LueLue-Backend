@@ -20,4 +20,4 @@ node_modules
 .wrangler
 .env
 pnpm-lock.yaml
-.idea
+./.idea
