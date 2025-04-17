@@ -23,5 +23,14 @@ pub async fn root() -> &'static str {
 // Documentation
 // https://github.com/cloudflare/workers-rs
 
-// TODO - Set git origin
 // TODO - Set up CI / CD -> connect to Cloudflare workers with GitHub Actions
+
+// needed endpoints
+// 
+
+// git feature branches _______
+// utils -> implement util functions
+// endpoints -> implement endpoints
+// refactor -> refactor code
+// => all are merge into dev
+
