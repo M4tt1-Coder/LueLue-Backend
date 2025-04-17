@@ -17,13 +17,14 @@ async fn fetch(
 }
 
 pub async fn root() -> &'static str {
-    "Hello Axum!"
+    "Buddne!"
 }
 
 // Documentation
 // https://github.com/cloudflare/workers-rs
 
-// TODO - Set up CI / CD -> connect to Cloudflare workers with GitHub Actions
+// prod URL
+// -> https://lue-lue-backend.geimat75.workers.dev/
 
 // needed endpoints
 // 
