@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "npx wrangler dev --local",
-    "up": "npx wrangler deploy"
+    "prod_up": "npx wrangler deploy"
   },
   "keywords": [],
   "author": "Matthis Geißler",
