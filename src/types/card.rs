@@ -1,3 +1,5 @@
+use serde::Deserialize;
+
 // using statements
 use crate::enums::card_types::CardType;
 
@@ -10,6 +12,7 @@ use crate::enums::card_types::CardType;
 /// # Fields
 /// - `name`: A string representing the name of the card.
 /// - `card_type`: An enum representing the type of the card, such as King, Queen, Jack, Ace, or
+#[derive(Deserialize)]
 pub struct Card {
     /// The name of the card.
     pub name: String,

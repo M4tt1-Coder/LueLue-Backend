@@ -1,6 +1,7 @@
+use axum::response::sse::KeepAlive;
 use axum::response::sse::{Event, Sse};
 
-use axum::response::sse::KeepAlive;
+// TODO: Determine all events that need to be sent in favor for the games function
 
 /// Handler for Server-Sent Events (SSE)
 ///

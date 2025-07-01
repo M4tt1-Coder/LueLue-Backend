@@ -4,6 +4,7 @@ use crate::enums::card_types::CardType;
 use crate::enums::game_state::GameState;
 use crate::types::chat::Chat;
 use crate::types::claim::Claim;
+use serde::Deserialize;
 use uuid::Uuid;
 
 // constants
@@ -18,6 +19,7 @@ const MAX_PLAYERS: usize = 5;
 ///
 /// Holds information about the state of the game, such as players, scores, and other relevant
 /// details.
+#[derive(Deserialize)]
 pub struct Game {
     /// Unique identifier for the game instance.
     pub id: Uuid,

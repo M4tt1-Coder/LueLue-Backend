@@ -1,5 +1,12 @@
 // TODO: Implement chat struct functionality
 
+use std::fmt;
+
+use axum::http::uri::InvalidUri;
+use serde::Deserialize;
+
+use crate::errors::invalid_message::InvalidMessageError;
+
 // constants
 
 /// The maximum number of messages that can be stored in a chat.
@@ -20,6 +27,7 @@ const MAX_CHAT_MESSAGE_LENGTH: usize = 50;
 ///
 ///    };
 /// ```
+#[derive(Deserialize)]
 pub struct Chat {
     pub messages: Vec<ChatMessage>,
     pub number_of_messages: usize,
@@ -37,18 +45,25 @@ pub struct Chat {
 /// use chrono::Utc;
 /// use your_crate::chat::ChatMessage;
 /// let message = ChatMessage {
-///    player_id: Uuid::new_v4(),
+///    player_id: Uuid::new_v4().to_string(),
 ///    content: String::from("Hello, world!"),
-///    sent_at: Utc::now(),
+///    sent_at: Utc::now().to_string(),
 ///    };
-/// ```   
+/// ```  
+#[derive(Deserialize)]
 pub struct ChatMessage {
-    pub player_id: uuid::Uuid,
+    pub player_id: String,
     pub content: String,
-    pub sent_at: chrono::DateTime<chrono::Utc>,
+    pub sent_at: String, // as chrono::DateTime<chrono::Utc>,
 }
 
 // Implementation of 'Chat' struct
+
+impl Default for Chat {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl Chat {
     /// Creates a fresh 'Chat' instance.
@@ -70,8 +85,6 @@ impl Chat {
         self.messages = vec![];
     }
 
-    // TODO: Add a returning error when the message was invalid or the maximum number was reached
-
     /// Tries adding a message to the 'Chat' instance of a game.
     ///
     /// When the message vector is full then the oldest massage is deleted and the new message was
@@ -84,11 +97,14 @@ impl Chat {
     /// # Returns
     ///
     /// Result<(), ApplicationError> - When the message was invalid.
-    pub fn add_chat_message(&mut self, message: ChatMessage) -> Result<(), ()> {
+    pub fn add_chat_message(&mut self, message: ChatMessage) -> Result<(), InvalidMessageError> {
         // message needs to be long enough
-        if message.content.len() <= 0 {
+        if message.content.is_empty() {
             println!("The message is too short to be added to the chat!");
-            return Err(());
+            return Err(InvalidMessageError {
+                message: "Too short message content! Must not be of length 0!".to_string(),
+                origin_message: message,
+            });
         }
 
         // check if the maximum number of messages was reached
@@ -103,27 +119,50 @@ impl Chat {
         self.number_of_messages += 1;
         self.messages.push(message);
 
-        return Ok(());
+        Ok(())
     }
 }
 
 // Implementation of 'ChatMessage' struct
 
 impl ChatMessage {
+    // TODO: Add the 'BadClientRequest' error return here
+
     /// Creates new 'ChatMessage' instance.
     ///
     /// # Returns
     ///
     /// New 'ChatMessage' object with the player id, message body and when it was sent.
+    ///
+    /// # Errors
+    ///
+    /// Returns 'BadClientRequest' if the a client provided invalid data.
     pub fn new(
-        player_id: uuid::Uuid,
+        player_id: String,
         content: String,
-        sent_at: chrono::DateTime<chrono::Utc>,
-    ) -> Self {
-        ChatMessage {
+        sent_at: String,
+    ) -> Result<Self, InvalidMessageError> {
+        if content.is_empty() || player_id.is_empty() || sent_at.is_empty() {
+            Err()
+        }
+        Ok(ChatMessage {
             player_id,
             content,
             sent_at,
-        }
+        })
+    }
+}
+
+impl fmt::Display for ChatMessage {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "[
+           PlayerID: {},
+           Content: {},
+           Sent at: {}
+            ]",
+            self.player_id, self.content, self.sent_ati
+        )
     }
 }
