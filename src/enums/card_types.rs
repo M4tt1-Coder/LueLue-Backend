@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 /// Card types for a card game.
 ///
 /// This module defines the different types of cards that can be used in the game.
@@ -18,6 +20,7 @@
 ///     _ => println!("Unknown card type."),
 /// }
 /// ```
+#[derive(Deserialize, Serialize)]
 pub enum CardType {
     /// King card type.
     King,

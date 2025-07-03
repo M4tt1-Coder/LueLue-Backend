@@ -1,11 +1,8 @@
-// TODO: Implement chat struct functionality
-
+use axum::Json;
+use serde::{Deserialize, Serialize};
 use std::fmt;
 
-use axum::http::uri::InvalidUri;
-use serde::Deserialize;
-
-use crate::errors::invalid_message::InvalidMessageError;
+use crate::errors::{bad_client_request::BadClientRequest, invalid_message::InvalidMessageError};
 
 // constants
 
@@ -27,7 +24,7 @@ const MAX_CHAT_MESSAGE_LENGTH: usize = 50;
 ///
 ///    };
 /// ```
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct Chat {
     pub messages: Vec<ChatMessage>,
     pub number_of_messages: usize,
@@ -50,7 +47,7 @@ pub struct Chat {
 ///    sent_at: Utc::now().to_string(),
 ///    };
 /// ```  
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct ChatMessage {
     pub player_id: String,
     pub content: String,
@@ -126,8 +123,6 @@ impl Chat {
 // Implementation of 'ChatMessage' struct
 
 impl ChatMessage {
-    // TODO: Add the 'BadClientRequest' error return here
-
     /// Creates new 'ChatMessage' instance.
     ///
     /// # Returns
@@ -137,14 +132,24 @@ impl ChatMessage {
     /// # Errors
     ///
     /// Returns 'BadClientRequest' if the a client provided invalid data.
-    pub fn new(
+    pub fn new<'a>(
         player_id: String,
         content: String,
         sent_at: String,
-    ) -> Result<Self, InvalidMessageError> {
+    ) -> Result<Self, BadClientRequest<'a, ChatMessage>> {
         if content.is_empty() || player_id.is_empty() || sent_at.is_empty() {
-            Err()
-        }
+            Err::<ChatMessage, BadClientRequest<_>>(BadClientRequest {
+                bad_data: Json(&ChatMessage {
+                    player_id: player_id.clone(),
+                    sent_at: sent_at.clone(),
+                    content: content.clone(),
+                }),
+                message: format!(
+                    "The provided data by player with id: {} for a chat message was not valid!",
+                    &player_id
+                ),
+            });
+        };
         Ok(ChatMessage {
             player_id,
             content,
@@ -162,7 +167,21 @@ impl fmt::Display for ChatMessage {
            Content: {},
            Sent at: {}
             ]",
-            self.player_id, self.content, self.sent_ati
+            self.player_id, self.content, self.sent_at
+        )
+    }
+}
+
+impl fmt::Debug for ChatMessage {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "[
+           PlayerID: {},
+           Content: {},
+           Sent at: {}
+            ]",
+            self.player_id, self.content, self.sent_at
         )
     }
 }

@@ -1,10 +1,8 @@
-// TODO: Add the game struct and its methods
-
 use crate::enums::card_types::CardType;
 use crate::enums::game_state::GameState;
 use crate::types::chat::Chat;
 use crate::types::claim::Claim;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 // constants
@@ -19,18 +17,18 @@ const MAX_PLAYERS: usize = 5;
 ///
 /// Holds information about the state of the game, such as players, scores, and other relevant
 /// details.
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct Game {
     /// Unique identifier for the game instance.
-    pub id: Uuid,
+    pub id: String,
     /// List of player IDs participating in the game.
-    pub player_ids: Vec<Uuid>,
+    pub player_ids: Vec<String>,
     /// ID of the player whose turn it is.
-    pub which_player_turn: uuid::Uuid, // ID of the player whose turn it is
+    pub which_player_turn: String, // ID of the player whose turn it is
     /// Current state of the game, represented as a string.
     pub state: GameState,
     /// Timestamp when the game was created
-    pub started_at: chrono::DateTime<chrono::Utc>,
+    pub started_at: String,
     /// The round number of the game
     pub round: usize,
     /// Chat of the specific game
@@ -67,11 +65,11 @@ impl Game {
     /// ```
     pub fn new() -> Self {
         Game {
-            id: Uuid::new_v4(),
-            player_ids: Vec::new(),
-            which_player_turn: Uuid::new_v4(),
+            id: Uuid::new_v4().to_string(),
+            player_ids: vec![],
+            which_player_turn: String::new(),
             state: GameState::Starting, // Placeholder for actual game state
-            started_at: chrono::Utc::now(),
+            started_at: chrono::Utc::now().to_string(),
             card_to_play: CardType::King,
             chat: Chat::new(),
             claims: vec![],

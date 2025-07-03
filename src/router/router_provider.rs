@@ -1,13 +1,14 @@
 // use statements
-use crate::root;
-use axum::routing::get;
+use axum::routing::{get, put};
 use axum::Router;
+
+use crate::handlers::game_handlers::update_game;
 
 /// Router provider for the Axum application.
 ///
 /// This module defines the router for the Axum application, setting up the routes
 pub fn router() -> Router {
     Router::new()
-        .route("/", get(root))
-        .route("/game/status", get(root))
+        // game instance endpoints
+        .route("/game/update", put(update_game))
 }

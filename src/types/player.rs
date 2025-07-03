@@ -1,4 +1,4 @@
-// TODO: Finish player model type
+use serde::{Deserialize, Serialize};
 
 use crate::types::card::Card;
 
@@ -7,9 +7,10 @@ use crate::types::card::Card;
 /// He / she can be identified by a unique ID.
 ///
 /// Contains data set by the user like the name, etc. ...
+#[derive(Deserialize, Serialize)]
 pub struct Player {
     /// Unique identifier of the player.
-    pub id: uuid::Uuid,
+    pub id: String,
 
     /// Name of the player.
     pub name: String,
@@ -18,7 +19,7 @@ pub struct Player {
     pub score: usize,
 
     /// The date and time when the player joined the game.
-    pub joined_at: chrono::DateTime<chrono::Utc>,
+    pub joined_at: String,
 
     /// The cards assigned to the player.
     pub assigned_cards: Vec<Card>,
@@ -34,10 +35,10 @@ impl Player {
     /// A new `Player` instance with a unique ID, the provided name, and an empty card list.
     pub fn new(name: String) -> Self {
         Player {
-            id: uuid::Uuid::new_v4(),
+            id: uuid::Uuid::new_v4().to_string(),
             name,
             score: 0,
-            joined_at: chrono::Utc::now(),
+            joined_at: chrono::Utc::now().to_string(),
             assigned_cards: Vec::new(),
         }
     }
