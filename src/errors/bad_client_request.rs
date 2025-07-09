@@ -1,7 +1,8 @@
 use std::fmt::{self, Debug, Display};
 
 use axum::{http::StatusCode, Json};
-use serde::Deserialize;
+
+use crate::errors::application_error::ErrorObject;
 
 /// Error type for all request with invalid data a client sends to the backend.
 ///
@@ -9,14 +10,14 @@ use serde::Deserialize;
 ///
 /// - 'message': Description what error occured.
 /// - 'bad_data': The data object of type 'T' that caused the error.
-pub struct BadClientRequest<'a, T: Deserialize<'a> + Display + Debug> {
+pub struct BadClientRequest<T: for<'a> ErrorObject<'a>> {
     /// Message for the client what he / she did wrong
     pub message: String,
     /// Data object as origin for the error
-    pub bad_data: Json<&'a T>,
+    pub bad_data: Json<T>,
 }
 
-impl<'a, T: Display + Deserialize<'a> + Debug> Display for BadClientRequest<'a, T> {
+impl<T: for<'a> ErrorObject<'a>> Display for BadClientRequest<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
@@ -26,7 +27,7 @@ impl<'a, T: Display + Deserialize<'a> + Debug> Display for BadClientRequest<'a, 
     }
 }
 
-impl<'a, T: Display + Debug + Deserialize<'a>> Debug for BadClientRequest<'a, T> {
+impl<T: for<'a> ErrorObject<'a>> Debug for BadClientRequest<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
@@ -36,7 +37,7 @@ impl<'a, T: Display + Debug + Deserialize<'a>> Debug for BadClientRequest<'a, T>
     }
 }
 
-impl<'a, T: Display + Debug + Deserialize<'a>> std::error::Error for BadClientRequest<'a, T> {
+impl<T: for<'a> ErrorObject<'a>> std::error::Error for BadClientRequest<T> {
     fn cause(&self) -> Option<&dyn std::error::Error> {
         None
     }
@@ -50,7 +51,7 @@ impl<'a, T: Display + Debug + Deserialize<'a>> std::error::Error for BadClientRe
     }
 }
 
-impl<'a, T: Debug + Display + Deserialize<'a>> BadClientRequest<'a, T> {
+impl<T: for<'a> ErrorObject<'a>> BadClientRequest<T> {
     /// Resembling http status code for a bad request
     pub const STATUS_CODE: StatusCode = StatusCode::BAD_REQUEST;
 
@@ -65,7 +66,7 @@ impl<'a, T: Debug + Display + Deserialize<'a>> BadClientRequest<'a, T> {
     ///
     /// BadClientRequest<'a, T>: Specific error for different endpoints for example.
     ///
-    pub fn new(message: String, bad_data: Json<&'a T>) -> BadClientRequest<'a, T> {
+    pub fn new(message: String, bad_data: Json<T>) -> BadClientRequest<T> {
         BadClientRequest { message, bad_data }
     }
 }

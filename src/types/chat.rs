@@ -2,7 +2,10 @@ use axum::Json;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-use crate::errors::{bad_client_request::BadClientRequest, invalid_message::InvalidMessageError};
+use crate::errors::{
+    application_error::ErrorObject, bad_client_request::BadClientRequest,
+    invalid_message::InvalidMessageError,
+};
 
 // constants
 
@@ -132,14 +135,14 @@ impl ChatMessage {
     /// # Errors
     ///
     /// Returns 'BadClientRequest' if the a client provided invalid data.
-    pub fn new<'a>(
+    pub fn new(
         player_id: String,
         content: String,
         sent_at: String,
-    ) -> Result<Self, BadClientRequest<'a, ChatMessage>> {
+    ) -> Result<Self, BadClientRequest<ChatMessage>> {
         if content.is_empty() || player_id.is_empty() || sent_at.is_empty() {
-            Err::<ChatMessage, BadClientRequest<_>>(BadClientRequest {
-                bad_data: Json(&ChatMessage {
+            return Err::<ChatMessage, BadClientRequest<_>>(BadClientRequest {
+                bad_data: Json(ChatMessage {
                     player_id: player_id.clone(),
                     sent_at: sent_at.clone(),
                     content: content.clone(),
@@ -157,7 +160,6 @@ impl ChatMessage {
         })
     }
 }
-
 impl fmt::Display for ChatMessage {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -185,3 +187,5 @@ impl fmt::Debug for ChatMessage {
         )
     }
 }
+
+impl ErrorObject<'_> for ChatMessage {}

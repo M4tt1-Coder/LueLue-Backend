@@ -21,3 +21,5 @@ node_modules
 .env
 pnpm-lock.yaml
 .idea
+build
+.DS_STORE

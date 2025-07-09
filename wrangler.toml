@@ -4,3 +4,8 @@ compatibility_date = "2025-04-16"
 
 [build]
 command = "cargo install -q worker-build && worker-build --release"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "luelue-database"
+database_id = "a402410d-3490-485f-abf2-8752af022401"

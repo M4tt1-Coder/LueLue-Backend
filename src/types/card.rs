@@ -1,3 +1,5 @@
+use std::{clone, fmt};
+
 use serde::{Deserialize, Serialize};
 
 // using statements
@@ -41,5 +43,26 @@ impl Default for Card {
     /// A new `Card` instance with an empty name and a default card type (King).
     fn default() -> Self {
         Card::new(String::new(), CardType::King)
+    }
+}
+
+impl fmt::Debug for Card {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Name: {}, Card Type: {}", self.name, self.card_type)
+    }
+}
+
+impl clone::Clone for Card {
+    fn clone(&self) -> Self {
+        Card {
+            name: self.name.clone(),
+            card_type: match self.card_type {
+                CardType::Ace => CardType::Ace,
+                CardType::King => CardType::King,
+                CardType::Joker => CardType::Jack,
+                CardType::Queen => CardType::Queen,
+                CardType::Jack => CardType::Jack,
+            },
+        }
     }
 }

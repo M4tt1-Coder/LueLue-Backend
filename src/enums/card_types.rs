@@ -1,3 +1,5 @@
+use std::fmt;
+
 use serde::{Deserialize, Serialize};
 
 /// Card types for a card game.
@@ -49,5 +51,21 @@ impl CardType {
             CardType::Ace => "Ace",
             CardType::Joker => "Joker",
         }
+    }
+}
+
+impl fmt::Display for CardType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                CardType::King => "King",
+                CardType::Queen => "Queen",
+                CardType::Jack => "Jack",
+                CardType::Ace => "Ace",
+                CardType::Joker => "Joker",
+            }
+        )
     }
 }

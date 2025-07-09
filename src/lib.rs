@@ -4,7 +4,7 @@ pub mod errors;
 pub mod handlers;
 pub mod middleware;
 pub mod router;
-pub mod sse;
+pub mod status;
 pub mod types;
 
 // Include the necessary dependencies
@@ -21,10 +21,6 @@ async fn fetch(
 ) -> Result<axum::http::Response<axum::body::Body>> {
     console_error_panic_hook::set_once();
     Ok(router_provider::router().call(req).await?)
-}
-
-pub async fn root() -> &'static str {
-    "Buddne!"
 }
 
 // Documentation
