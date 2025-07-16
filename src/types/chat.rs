@@ -24,12 +24,18 @@ const MAX_CHAT_MESSAGE_LENGTH: usize = 50;
 /// let mut chat = Chat {
 ///    messages: Vec::new(),
 ///    number_of_messages: 0,
-///
+///    id: "9fd2151d-432e-4549-99bf-b684b5be9555".to_string()
 ///    };
 /// ```
 #[derive(Deserialize, Serialize)]
 pub struct Chat {
+    /// Identifier of a chat instance
+    pub id: String,
+    /// List of all messages sent in the chat of a game
     pub messages: Vec<ChatMessage>,
+    /// Total number of all messages
+    ///
+    /// Maximal number: 50
     pub number_of_messages: usize,
 }
 
@@ -45,6 +51,7 @@ pub struct Chat {
 /// use chrono::Utc;
 /// use your_crate::chat::ChatMessage;
 /// let message = ChatMessage {
+///    id: Uuid::new_v4().to_string(),
 ///    player_id: Uuid::new_v4().to_string(),
 ///    content: String::from("Hello, world!"),
 ///    sent_at: Utc::now().to_string(),
@@ -52,8 +59,13 @@ pub struct Chat {
 /// ```  
 #[derive(Deserialize, Serialize)]
 pub struct ChatMessage {
+    /// Identifier of the ChatMessage
+    pub id: String,
+    /// ID of the player, who sent the message
     pub player_id: String,
+    /// Content of the message
     pub content: String,
+    /// Date string, when the message was sent by the user
     pub sent_at: String, // as chrono::DateTime<chrono::Utc>,
 }
 
@@ -72,6 +84,7 @@ impl Chat {
     /// - 'Chat' object with no messages
     pub fn new() -> Self {
         Chat {
+            id: uuid::Uuid::new_v4().to_string(),
             messages: vec![],
             number_of_messages: 0,
         }
@@ -136,6 +149,7 @@ impl ChatMessage {
     ///
     /// Returns 'BadClientRequest' if the a client provided invalid data.
     pub fn new(
+        id: String,
         player_id: String,
         content: String,
         sent_at: String,
@@ -143,6 +157,7 @@ impl ChatMessage {
         if content.is_empty() || player_id.is_empty() || sent_at.is_empty() {
             return Err::<ChatMessage, BadClientRequest<_>>(BadClientRequest {
                 bad_data: Json(ChatMessage {
+                    id: id.clone(),
                     player_id: player_id.clone(),
                     sent_at: sent_at.clone(),
                     content: content.clone(),
@@ -154,6 +169,7 @@ impl ChatMessage {
             });
         };
         Ok(ChatMessage {
+            id,
             player_id,
             content,
             sent_at,
@@ -165,11 +181,12 @@ impl fmt::Display for ChatMessage {
         write!(
             f,
             "[
+           Id: {},
            PlayerID: {},
            Content: {},
            Sent at: {}
             ]",
-            self.player_id, self.content, self.sent_at
+            self.id, self.player_id, self.content, self.sent_at
         )
     }
 }
@@ -179,11 +196,12 @@ impl fmt::Debug for ChatMessage {
         write!(
             f,
             "[
+           Id: {},
            PlayerID: {},
            Content: {},
            Sent at: {}
             ]",
-            self.player_id, self.content, self.sent_at
+            self.id, self.player_id, self.content, self.sent_at
         )
     }
 }

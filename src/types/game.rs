@@ -1,7 +1,7 @@
-use crate::enums::card_types::CardType;
 use crate::enums::game_state::GameState;
 use crate::types::chat::Chat;
 use crate::types::claim::Claim;
+use crate::{enums::card_types::CardType, types::player::Player};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -22,7 +22,7 @@ pub struct Game {
     /// Unique identifier for the game instance.
     pub id: String,
     /// List of player IDs participating in the game.
-    pub player_ids: Vec<String>,
+    pub players: Vec<Player>,
     /// ID of the player whose turn it is.
     pub which_player_turn: String, // ID of the player whose turn it is
     /// Current state of the game, represented as a string.
@@ -30,7 +30,7 @@ pub struct Game {
     /// Timestamp when the game was created
     pub started_at: String,
     /// The round number of the game
-    pub round: usize,
+    pub round_number: usize,
     /// Chat of the specific game
     pub chat: Chat,
     /// Changes after every round and is randomly selected.
@@ -39,7 +39,7 @@ pub struct Game {
     pub claims: Vec<Claim>,
 }
 
-// TODO: Add the necessary method for the game handling
+// TODO: Add the necessary methods for the game handling
 
 impl Default for Game {
     /// Provides a default implementation for the `Game` struct.
@@ -66,14 +66,14 @@ impl Game {
     pub fn new() -> Self {
         Game {
             id: Uuid::new_v4().to_string(),
-            player_ids: vec![],
+            players: vec![],
             which_player_turn: String::new(),
             state: GameState::Starting, // Placeholder for actual game state
             started_at: chrono::Utc::now().to_string(),
             card_to_play: CardType::King,
             chat: Chat::new(),
             claims: vec![],
-            round: 0,
+            round_number: 0,
         }
     }
 }

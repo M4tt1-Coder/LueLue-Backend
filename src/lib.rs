@@ -2,12 +2,14 @@
 pub mod enums;
 pub mod errors;
 pub mod handlers;
+pub mod logic;
 pub mod middleware;
 pub mod router;
 pub mod status;
 pub mod types;
 
 // Include the necessary dependencies
+use log::warn;
 use tower_service::Service;
 use worker::*;
 
@@ -16,9 +18,16 @@ use crate::router::router_provider;
 #[event(fetch)]
 async fn fetch(
     req: HttpRequest,
-    _env: Env,
+    env: Env,
     _ctx: Context,
 ) -> Result<axum::http::Response<axum::body::Body>> {
+    // TODO: Set up database repositories for all types relevant for direct data exchange
+
+    // Get the database binding -> access to D1 database
+    let _database = env.d1("DB").map_err(|err| {
+        warn!("{err}");
+        worker::Error::RustError("DB binding not found".to_string())
+    })?;
     console_error_panic_hook::set_once();
     Ok(router_provider::router().call(req).await?)
 }

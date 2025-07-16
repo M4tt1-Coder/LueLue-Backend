@@ -26,8 +26,11 @@ const MAX_CARDS_PER_CLAIM: usize = 4;
 /// - `number_of_cards`: The number of cards claimed by the player.
 #[derive(Deserialize, Serialize)]
 pub struct Claim {
+    /// Id of the user that placed the claim on the stack
     pub created_by: String,
+    /// Number of cards used in the claim
     pub number_of_cards: usize,
+    /// List of placed cards in the claim
     pub cards: Vec<Card>,
 }
 

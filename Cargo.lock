@@ -562,6 +562,7 @@ dependencies = [
  "axum-valid",
  "chrono",
  "console_error_panic_hook",
+ "log",
  "serde",
  "serde_json",
  "tower-service",
