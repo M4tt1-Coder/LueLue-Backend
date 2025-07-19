@@ -23,6 +23,11 @@ pub struct Player {
 
     /// The cards assigned to the player.
     pub assigned_cards: Vec<Card>,
+
+    /// The last time a player requested a status updated.
+    ///
+    /// If the time exceeds 5 minutes the player will be deleted from the gaming session.
+    pub last_time_updated: String,
 }
 
 impl Player {
@@ -40,6 +45,7 @@ impl Player {
             score: 0,
             joined_at: chrono::Utc::now().to_string(),
             assigned_cards: Vec::new(),
+            last_time_updated: chrono::Utc::now().to_string(),
         }
     }
 }

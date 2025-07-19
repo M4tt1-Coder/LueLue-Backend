@@ -1,5 +1,4 @@
 // TODO: Set up all necessary handler functions regarding serving  with the game instance
-// TODO: Add the D1 database connection
 
 use axum::{
     extract::Request,
