@@ -52,6 +52,30 @@ impl CardType {
             CardType::Joker => "Joker",
         }
     }
+
+    /// Returns the index of the card type.
+    ///
+    /// # Returns
+    ///
+    /// A `usize` representing the index of the card type.
+    ///
+    /// # Index Mapping
+    ///
+    /// - `King` is mapped to index `0`.
+    /// - `Queen` is mapped to index `1`.
+    /// - `Jack` is mapped to index `2`.
+    /// - `Ace` is mapped to index `3`.
+    /// - `Joker` is mapped to index `4`.
+    ///
+    pub fn index(&self) -> usize {
+        match self {
+            CardType::King => 0,
+            CardType::Queen => 1,
+            CardType::Jack => 2,
+            CardType::Ace => 3,
+            CardType::Joker => 4,
+        }
+    }
 }
 
 impl fmt::Display for CardType {

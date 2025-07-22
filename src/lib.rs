@@ -15,7 +15,10 @@ use log::warn;
 use tower_service::Service;
 use worker::*;
 
-use crate::router::router_provider;
+use crate::{
+    repositories::game_repositories::GameRepository,
+    router::router_provider::{self, AppState},
+};
 
 #[event(fetch)]
 async fn fetch(
@@ -31,7 +34,11 @@ async fn fetch(
         worker::Error::RustError("DB binding not found".to_string())
     })?;
     console_error_panic_hook::set_once();
-    Ok(router_provider::router().call(req).await?)
+    Ok(router_provider::router(AppState {
+        game_repository: GameRepository::new(&_database),
+    })
+    .call(req)
+    .await?)
 }
 
 // Documentation

@@ -37,4 +37,25 @@ impl GameState {
             GameState::Starting => "Starting",
         }
     }
+
+    /// Returns the index of the game state.
+    ///
+    /// # Returns
+    /// A `usize` representing the index of the game state.
+    ///
+    /// # Index Mapping
+    ///
+    /// - `InProgress` is mapped to index `0`.
+    /// - `Ended` is mapped to index `1`.
+    /// - `WaitingForPlayers` is mapped to index `2`.
+    /// - `Starting` is mapped to index `3`.
+    ///
+    pub fn index(&self) -> usize {
+        match self {
+            GameState::InProgress => 0,
+            GameState::Ended => 1,
+            GameState::WaitingForPlayers => 2,
+            GameState::Starting => 3,
+        }
+    }
 }

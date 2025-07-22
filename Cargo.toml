@@ -31,6 +31,7 @@ axum-valid = "0.24.0"
 uuid = { version = "1.17.0", features = ["v4", "js"] }
 chrono = "0.4.41"
 log = "0.4.27"
+wasm-bindgen = "0.2.100"
 
 # ______________
 # futures = "0.3.31"
