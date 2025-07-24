@@ -1,4 +1,7 @@
+use std::fmt::{Debug, Display};
+
 use crate::enums::game_state::GameState;
+use crate::errors::application_error::ErrorObject;
 use crate::types::chat::Chat;
 use crate::types::claim::Claim;
 use crate::{enums::card_types::CardType, types::player::Player};
@@ -77,3 +80,38 @@ impl Game {
         }
     }
 }
+
+// ----- Implementation 'ErrorObject' for 'Game' -----
+
+impl Display for Game {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            f,
+            "Game ID: {}, Players Number: {}, State: {}, Started At: {}, Round Number: {}",
+            self.id,
+            self.players.len(),
+            self.state,
+            self.started_at,
+            self.round_number
+        )
+    }
+}
+
+impl Debug for Game {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            f,
+            "Game {{ id: {}, players: {:?}, which_player_turn: {}, state: {:?}, started_at: {}, round_number: {}, card_to_play: {:?}, claims: {:?} }}",
+            self.id,
+            self.players,
+            self.which_player_turn,
+            self.state,
+            self.started_at,
+            self.round_number,
+            self.card_to_play,
+            self.claims
+        )
+    }
+}
+
+impl<'a> ErrorObject<'a> for Game {}

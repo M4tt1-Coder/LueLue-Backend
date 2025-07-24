@@ -99,4 +99,4 @@ impl fmt::Debug for Claim {
     }
 }
 
-impl ErrorObject<'_> for Claim {}
+impl<'a> ErrorObject<'a> for Claim {}

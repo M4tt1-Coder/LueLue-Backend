@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 
 use crate::types::card::Card;
@@ -7,7 +9,7 @@ use crate::types::card::Card;
 /// He / she can be identified by a unique ID.
 ///
 /// Contains data set by the user like the name, etc. ...
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct Player {
     /// Unique identifier of the player.
     pub id: String,
@@ -47,5 +49,22 @@ impl Player {
             assigned_cards: Vec::new(),
             last_time_updated: chrono::Utc::now().to_string(),
         }
+    }
+}
+
+// ----- Implementation of 'Display' trait for Player -----
+
+impl Display for Player {
+    /// Formats the `Player` instance as a string.
+    ///
+    /// # Returns
+    /// A string representation of the `Player` instance, including the player's ID, name, score,
+    /// and joined date.
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Player ID: {}, Name: {}, Score: {}, Joined At: {}",
+            self.id, self.name, self.score, self.joined_at
+        )
     }
 }

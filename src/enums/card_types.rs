@@ -22,7 +22,7 @@ use serde::{Deserialize, Serialize};
 ///     _ => println!("Unknown card type."),
 /// }
 /// ```
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub enum CardType {
     /// King card type.
     King,

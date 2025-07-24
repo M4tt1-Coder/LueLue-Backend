@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::fmt::{Debug, Display};
 
 /// Represents the current state of the game.
 ///
@@ -12,7 +13,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// Each variant represents a distinct phase in the lifecycle of a game, allowing for clear
 /// management and transitions between states.
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub enum GameState {
     /// The game is currently in progress.
     InProgress,
@@ -57,5 +58,13 @@ impl GameState {
             GameState::WaitingForPlayers => 2,
             GameState::Starting => 3,
         }
+    }
+}
+
+// Implementing the `Display` trait for `GameState` allows for easy printing of the game state.
+
+impl Display for GameState {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
     }
 }

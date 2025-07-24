@@ -1,8 +1,8 @@
 // TODO: Implement the game repositories for the interaction with the database
 
-use std::any::Any;
+use std::error::Error;
 
-use crate::types::game::Game;
+use crate::{errors::database_query_error::DatabaseQueryError, types::game::Game};
 use wasm_bindgen::JsValue;
 use worker::D1Database;
 
@@ -38,8 +38,6 @@ impl<'a> GameRepository<'a> {
     //    &self.db
     // }
 
-    // TODO: Add a custom error type for database operations
-
     /// Adds a new game to the D1 database.
     ///
     /// # Arguments
@@ -49,11 +47,12 @@ impl<'a> GameRepository<'a> {
     /// # Returns
     ///
     /// A `Result` indicating success or failure of the operation.
-    pub fn add_game(&self, game: Game) -> Result<(), String> {
-        let result = self
+    pub async fn add_game(&self, game: Game) -> Result<Game, DatabaseQueryError<Game>> {
+        let added_game = self
             .db
             .prepare(
-                "INSERT INTO games (id, started_at, round_number, state, which_players_turn, card_to_play) VALUES (1?, 2?, 3?) RETURNING *;",
+                "INSERT INTO games (id, started_at, round_number, state, which_players_turn, card_to_play) 
+                    VALUES (1?, 2?, 3?, 4?, 5?, 6?) RETURNING *;",
             )
             .bind(&[
                 JsValue::from(game.id),
@@ -62,9 +61,23 @@ impl<'a> GameRepository<'a> {
                 JsValue::from(game.state.index()),
                 JsValue::from(game.which_player_turn),
                 JsValue::from(game.card_to_play.index()),
-            ]);
+            ]).unwrap().first::<Game>(None).await;
 
-        todo!("Implement the logic to add a game to the D1 database");
+        match added_game {
+            Ok(game) => match game {
+                Some(game) => Ok(game),
+                None => Err(DatabaseQueryError::new(
+                    "Failed to add game to the database".to_string(),
+                    None,
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                )),
+            },
+            Err(err) => Err(DatabaseQueryError::new(
+                err.to_string(),
+                None,
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            )),
+        }
     }
 
     /// Updates an existing game in the D1 database.

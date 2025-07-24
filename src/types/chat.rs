@@ -206,4 +206,4 @@ impl fmt::Debug for ChatMessage {
     }
 }
 
-impl ErrorObject<'_> for ChatMessage {}
+impl<'a> ErrorObject<'a> for ChatMessage {}
