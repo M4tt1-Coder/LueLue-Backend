@@ -1,3 +1,4 @@
+use axum::response::IntoResponse;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -110,5 +111,15 @@ impl Default for StatusUpdate {
             player_data: None,
             player_execluded_from_game: false,
         }
+    }
+}
+
+impl IntoResponse for StatusUpdate {
+    /// Converts the `StatusUpdate` instance into an HTTP response.
+    ///
+    /// # Returns
+    /// An HTTP response containing the serialized `StatusUpdate` data.
+    fn into_response(self) -> axum::response::Response {
+        axum::Json(self).into_response()
     }
 }
