@@ -1,6 +1,3 @@
--- TODO: Update foreign keys in the following tables: claims, players to have the game_id column as foreign key
-
-
 DROP TABLE chats;
 DROP TABLE claims;
 DROP TABLE players;

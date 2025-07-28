@@ -1,5 +1,3 @@
-// TODO: Implement the game repositories for the interaction with the database
-
 use crate::{
     errors::database_query_error::DatabaseQueryError,
     types::{chat::Chat, claim::Claim, game::Game, player::Player},
@@ -242,6 +240,35 @@ impl<'a> GameRepository<'a> {
                 }
             }
 
+            Err(err) => Err(DatabaseQueryError::new(
+                err.to_string(),
+                None,
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            )),
+        }
+    }
+
+    /// Deletes a game by its ID from the D1 database.
+    ///
+    ///
+    /// # Arguments
+    ///
+    /// * `game_id` - A string slice representing the ID of the game to be deleted.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` indicating success or failure of the operation.
+    pub async fn delete_game(&self, game_id: &str) -> Result<(), DatabaseQueryError<Game>> {
+        let query_result = self
+            .db
+            .prepare("DELETE FROM games WHERE id = ?;")
+            .bind(&[JsValue::from(game_id)])
+            .unwrap()
+            .run()
+            .await;
+
+        match query_result {
+            Ok(_) => Ok(()),
             Err(err) => Err(DatabaseQueryError::new(
                 err.to_string(),
                 None,
