@@ -79,6 +79,8 @@ impl<'a> GameRepository<'a> {
         }
     }
 
+    // TODO: Add a DTO for the game update to avoid sending the whole game object
+
     /// Updates an existing game in the D1 database.
     ///
     /// # Arguments
@@ -239,7 +241,6 @@ impl<'a> GameRepository<'a> {
                     Ok(output)
                 }
             }
-
             Err(err) => Err(DatabaseQueryError::new(
                 err.to_string(),
                 None,
@@ -249,7 +250,6 @@ impl<'a> GameRepository<'a> {
     }
 
     /// Deletes a game by its ID from the D1 database.
-    ///
     ///
     /// # Arguments
     ///
