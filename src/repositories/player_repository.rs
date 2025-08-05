@@ -171,11 +171,9 @@ impl<'a> PlayerRepository<'a> {
             bindings.push(JsValue::from(score));
         }
 
-        // TODO: 'last_time_updated' is always update when updating a player, so it should not be
-        // optional
-        if let Some(last_time_updated) = &player.last_time_updated {
-            query.push_str("last_time_updated = ?, ");
-            bindings.push(JsValue::from(last_time_updated));
+        if let Some(last_time_update_requested) = &player.last_time_update_requested {
+            query.push_str("last_time_update_requested = ?, ");
+            bindings.push(JsValue::from(last_time_update_requested));
         }
 
         // Remove the trailing comma and space

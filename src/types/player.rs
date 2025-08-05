@@ -38,7 +38,7 @@ pub struct Player {
     /// The last time a player requested a status updated.
     ///
     /// If the time exceeds 5 minutes the player will be deleted from the gaming session.
-    pub last_time_updated: String,
+    pub last_time_update_requested: String,
 }
 
 impl Player {
@@ -57,7 +57,7 @@ impl Player {
             score: 0,
             joined_at: chrono::Utc::now().to_string(),
             assigned_cards: Vec::new(),
-            last_time_updated: chrono::Utc::now().to_string(),
+            last_time_update_requested: chrono::Utc::now().to_string(),
         }
     }
 
@@ -124,8 +124,8 @@ pub struct UpdatePlayerDTO {
     /// The new game ID for the player.
     pub assigned_cards: Option<Vec<Card>>,
 
-    /// The last time the player was updated.
-    pub last_time_updated: Option<String>,
+    /// The last time when the client requested a status update
+    pub last_time_update_requested: Option<String>,
 }
 
 impl UpdatePlayerDTO {
@@ -143,17 +143,15 @@ impl UpdatePlayerDTO {
         id: String,
         name: Option<String>,
         score: Option<usize>,
-        last_time_updated: Option<String>,
         assigned_cards: Option<Vec<Card>>,
+        last_time_update_requested: Option<String>,
     ) -> Self {
         UpdatePlayerDTO {
             id,
             name,
             score,
-            last_time_updated: Some(
-                last_time_updated.unwrap_or_else(|| chrono::Utc::now().to_string()),
-            ),
             assigned_cards,
+            last_time_update_requested,
         }
     }
 }
@@ -169,8 +167,8 @@ impl Display for UpdatePlayerDTO {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "UpdatePlayerDTO ID: {}, Name: {:?}, Score: {:?}, Last Time Updated: {:?}",
-            self.id, self.name, self.score, self.last_time_updated
+            "UpdatePlayerDTO ID: {}, Name: {:?}, Score: {:?}, Last time when update requested: {:?}",
+            self.id, self.name, self.score, self.last_time_update_requested
         )
     }
 }

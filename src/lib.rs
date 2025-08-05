@@ -16,7 +16,7 @@ use tower_service::Service;
 use worker::*;
 
 use crate::{
-    repositories::game_repositories::GameRepository,
+    repositories::game_repository::GameRepository,
     router::router_provider::{self, AppState},
 };
 

@@ -3,7 +3,7 @@ use axum::routing::{get, put};
 use axum::Router;
 
 use crate::handlers::game_handlers::update_game;
-use crate::repositories::game_repositories::GameRepository;
+use crate::repositories::game_repository::GameRepository;
 
 /// Application state for the Axum application.
 ///
