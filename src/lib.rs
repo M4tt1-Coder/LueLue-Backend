@@ -61,3 +61,5 @@ async fn fetch(
 // endpoints -> implement endpoints
 // refactor -> refactor code
 // => all are merge into dev
+
+// TODO: Need extra thread for checking if a player is offline and discard him / her from the game

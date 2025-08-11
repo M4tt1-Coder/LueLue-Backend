@@ -13,7 +13,7 @@ use crate::{errors::application_error::ErrorObject, types::card::Card};
 /// He / she can be identified by a unique ID.
 ///
 /// Contains data set by the user like the name, etc. ...
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Player {
     /// Unique identifier of the player.
     pub id: String,

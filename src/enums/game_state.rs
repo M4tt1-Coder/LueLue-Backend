@@ -13,7 +13,7 @@ use std::fmt::{Debug, Display};
 ///
 /// Each variant represents a distinct phase in the lifecycle of a game, allowing for clear
 /// management and transitions between states.
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum GameState {
     /// The game is currently in progress.
     InProgress,
@@ -58,6 +58,13 @@ impl GameState {
             GameState::WaitingForPlayers => 2,
             GameState::Starting => 3,
         }
+    }
+
+    /// Simply returns the number of all enum variants of the `GameState` enum as a *usize*.
+    ///
+    /// Needs to be updated if the number of variants is modified!
+    pub fn number_of_values() -> usize {
+        4
     }
 }
 

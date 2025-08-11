@@ -1,5 +1,3 @@
-// TODO: Implement the player repository functions
-
 use wasm_bindgen::JsValue;
 use worker::D1Database;
 

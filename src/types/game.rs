@@ -2,8 +2,10 @@ use std::fmt::{Debug, Display};
 
 use crate::enums::game_state::GameState;
 use crate::errors::application_error::ErrorObject;
+use crate::errors::process_error::ProcessError;
 use crate::types::chat::Chat;
 use crate::types::claim::Claim;
+use crate::utils::game_service::select_new_card_to_be_played;
 use crate::{enums::card_types::CardType, types::player::Player};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -31,6 +33,8 @@ pub struct Game {
     /// Current state of the game, represented as a string.
     pub state: GameState,
     /// Timestamp when the game was created
+    ///
+    /// This property is static.
     pub started_at: String,
     /// The round number of the game
     pub round_number: usize,
@@ -42,7 +46,41 @@ pub struct Game {
     pub claims: Vec<Claim>,
 }
 
-// TODO: Add the necessary methods for the game handling
+/// DTO type for the purpose of updating a game entry.
+///
+/// Just the ID of a Game instance is needed every other property can be empty.
+///
+/// # Props
+///
+/// - `id` -> Identifier of the Game instance; can't be null
+/// - `players` -> List of new players
+/// - `which_player_turn` -> New id of the player who's turn it is to make a claim
+/// - `state` -> Editted state of a Game
+/// - `round_number` -> New round number of a Game
+/// - `chat` -> Potentially new chat instance
+/// - `card_to_play` -> Changes after every made round
+/// - `claims` -> List of claims in the current round
+#[derive(Deserialize, Debug)]
+pub struct UpdateGameDTO {
+    /// Identifier of the game is always needed.
+    pub id: String,
+    /// Optional list of players, who joined the game
+    pub players: Option<Vec<Player>>,
+    /// Optional identifier of the player, who needs to make his / her move next
+    pub which_player_turn: Option<String>,
+    /// Optional new game state of the game
+    pub state: Option<GameState>,
+    /// Optional new round number
+    ///
+    /// Starts by 1 and increments by 1
+    pub round_number: Option<usize>,
+    /// Optional modified chat instance
+    pub chat: Option<Chat>,
+    /// Optional mutated card to play in the current round
+    pub card_to_play: Option<CardType>,
+    /// Optional list of new claims made by users
+    pub claims: Option<Vec<Claim>>,
+}
 
 impl Default for Game {
     /// Provides a default implementation for the `Game` struct.
@@ -76,8 +114,60 @@ impl Game {
             card_to_play: CardType::King,
             chat: Chat::new(),
             claims: vec![],
-            round_number: 0,
+            round_number: 1,
         }
+    }
+
+    /// Creates a new instance of a `Game` struct from a unmutable reference.
+    ///
+    /// All data is cloned!
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    ///     let game = Game::new();
+    ///     let game_2 = Game::from_ref(&game);
+    /// ```
+    pub fn from_ref(game: &Game) -> Self {
+        Game {
+            id: game.id.clone(),
+            players: game.players.clone(),
+            which_player_turn: game.which_player_turn.clone(),
+            state: game.state.clone(),
+            started_at: game.started_at.clone(),
+            card_to_play: game.card_to_play.clone(),
+            chat: game.chat.clone(),
+            claims: game.claims.clone(),
+            round_number: game.round_number.clone(),
+        }
+    }
+
+    /// Prepares a Game for it's next round.
+    ///
+    /// -> Select the first player in the list to start again in the new round
+    /// -> Randomly select one card that needs to be played in tht next round
+    /// -> Empties the claims list
+    /// -> Increments the round counter
+    ///
+    pub fn prep_for_new_round(&mut self) -> Result<(), ProcessError<Game>> {
+        // set select player to the first in the list
+        if self.players.len() == 0 {
+            return Err(ProcessError::new("Can't prepare the game for the next round! There are no players in the game's list!".to_string(), 
+                "ProcessError::new()".to_string(), 
+                Some(Game::from_ref(self))));
+        }
+
+        self.which_player_turn = self.players[0].id.clone();
+
+        // get new card to play -> with csprng
+        self.card_to_play = select_new_card_to_be_played();
+
+        // empty claims list
+        self.claims = vec![];
+        // increment the round number
+        self.round_number += 1;
+
+        Ok(())
     }
 }
 

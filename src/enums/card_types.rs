@@ -1,5 +1,6 @@
 use std::fmt;
 
+use log::warn;
 use serde::{Deserialize, Serialize};
 
 /// Card types for a card game.
@@ -22,7 +23,7 @@ use serde::{Deserialize, Serialize};
 ///     _ => println!("Unknown card type."),
 /// }
 /// ```
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum CardType {
     /// King card type.
     King,
@@ -75,6 +76,36 @@ impl CardType {
             CardType::Ace => 3,
             CardType::Joker => 4,
         }
+    }
+
+    /// Simply returns the number of all enum variants of the `CardType` enum as a *usize*.
+    ///
+    /// Needs to be updated if the number of variants is modified!
+    pub fn number_of_values() -> usize {
+        5
+    }
+
+    /// Creates a new instance of `CardType` from a ***usize***.
+    ///
+    /// Makes sure that if an invalid number was provided that calculations still work properly.
+    ///
+    /// Covers all cases!
+    pub fn from_usize(num: usize) -> Self {
+        // make sure a valid number in the prefered range is used
+        let used_num = num % Self::number_of_values();
+
+        return match used_num {
+            0 => CardType::King,
+            1 => CardType::Queen,
+            2 => CardType::Jack,
+            3 => CardType::Ace,
+            4 => CardType::Joker,
+            5_usize.. => {
+                warn!("When creating an instance of 'CardType' a provided was out of range of the allowed scope!");
+
+                CardType::King
+            }
+        };
     }
 }
 

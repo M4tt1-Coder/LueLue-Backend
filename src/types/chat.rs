@@ -27,7 +27,7 @@ const MAX_CHAT_MESSAGE_LENGTH: usize = 50;
 ///    id: "9fd2151d-432e-4549-99bf-b684b5be9555".to_string()
 ///    };
 /// ```
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Chat {
     /// Identifier of a chat instance
     pub id: String,
