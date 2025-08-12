@@ -57,7 +57,7 @@ pub struct Chat {
 ///    sent_at: Utc::now().to_string(),
 ///    };
 /// ```  
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct ChatMessage {
     /// Identifier of the ChatMessage
     pub id: String,

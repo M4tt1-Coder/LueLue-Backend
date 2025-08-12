@@ -85,7 +85,7 @@ impl<'a> GameRepository<'a> {
     ///
     /// # Arguments
     ///
-    /// * `game` - A reference to the `Game` instance containing updated information.
+    /// - `game` - A reference to the `Game` instance containing updated information.
     ///
     /// # Returns
     ///

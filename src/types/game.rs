@@ -7,6 +7,8 @@ use crate::types::chat::Chat;
 use crate::types::claim::Claim;
 use crate::utils::game_service::select_new_card_to_be_played;
 use crate::{enums::card_types::CardType, types::player::Player};
+use axum::http::StatusCode;
+use axum::response::IntoResponse;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -44,42 +46,6 @@ pub struct Game {
     pub card_to_play: CardType,
     /// Vector of claims every player made
     pub claims: Vec<Claim>,
-}
-
-/// DTO type for the purpose of updating a game entry.
-///
-/// Just the ID of a Game instance is needed every other property can be empty.
-///
-/// # Props
-///
-/// - `id` -> Identifier of the Game instance; can't be null
-/// - `players` -> List of new players
-/// - `which_player_turn` -> New id of the player who's turn it is to make a claim
-/// - `state` -> Editted state of a Game
-/// - `round_number` -> New round number of a Game
-/// - `chat` -> Potentially new chat instance
-/// - `card_to_play` -> Changes after every made round
-/// - `claims` -> List of claims in the current round
-#[derive(Deserialize, Debug)]
-pub struct UpdateGameDTO {
-    /// Identifier of the game is always needed.
-    pub id: String,
-    /// Optional list of players, who joined the game
-    pub players: Option<Vec<Player>>,
-    /// Optional identifier of the player, who needs to make his / her move next
-    pub which_player_turn: Option<String>,
-    /// Optional new game state of the game
-    pub state: Option<GameState>,
-    /// Optional new round number
-    ///
-    /// Starts by 1 and increments by 1
-    pub round_number: Option<usize>,
-    /// Optional modified chat instance
-    pub chat: Option<Chat>,
-    /// Optional mutated card to play in the current round
-    pub card_to_play: Option<CardType>,
-    /// Optional list of new claims made by users
-    pub claims: Option<Vec<Claim>>,
 }
 
 impl Default for Game {
@@ -205,3 +171,102 @@ impl Debug for Game {
 }
 
 impl<'a> ErrorObject<'a> for Game {}
+
+// ----- Implementation of the 'IntoResponse' trai for the 'Game' struct -----
+
+impl IntoResponse for Game {
+    /// Convert a 'Game' instance into a response object.
+    ///
+    /// Comes with status code 200.
+    fn into_response(self) -> axum::response::Response {
+        (StatusCode::OK, self).into_response()
+    }
+}
+
+/// DTO type for the purpose of updating a game entry.
+///
+/// Just the ID of a Game instance is needed every other property can be empty.
+///
+/// # Props
+///
+/// - `id` -> Identifier of the Game instance; can't be null
+/// - `players` -> List of new players
+/// - `which_player_turn` -> New id of the player who's turn it is to make a claim
+/// - `state` -> Editted state of a Game
+/// - `round_number` -> New round number of a Game
+/// - `chat` -> Potentially new chat instance
+/// - `card_to_play` -> Changes after every made round
+/// - `claims` -> List of claims in the current round
+#[derive(Deserialize, Debug)]
+pub struct UpdateGameDTO {
+    /// Identifier of the game is always needed.
+    pub id: String,
+    /// Optional list of players, who joined the game
+    pub players: Option<Vec<Player>>,
+    /// Optional identifier of the player, who needs to make his / her move next
+    pub which_player_turn: Option<String>,
+    /// Optional new game state of the game
+    pub state: Option<GameState>,
+    /// Optional new round number
+    ///
+    /// Starts by 1 and increments by 1
+    pub round_number: Option<usize>,
+    /// Optional modified chat instance
+    pub chat: Option<Chat>,
+    /// Optional mutated card to play in the current round
+    pub card_to_play: Option<CardType>,
+    /// Optional list of new claims made by users
+    pub claims: Option<Vec<Claim>>,
+}
+
+impl UpdateGameDTO {
+    /// Creates a new object of a `UpdateGameDTO` struct.
+    ///
+    /// The `id` is mandatory but all the args can be passed or not.
+    ///
+    /// # Returns
+    ///
+    /// -> ***`UpdateGameDTO`*** instance that represents modified data of a `Game`
+    pub fn new(
+        id: String,
+        players: Option<Vec<Player>>,
+        which_player_turn: Option<String>,
+        state: Option<GameState>,
+        round_number: Option<usize>,
+        chat: Option<Chat>,
+        card_to_play: Option<CardType>,
+        claims: Option<Vec<Claim>>,
+    ) -> Self {
+        UpdateGameDTO {
+            id,
+            players,
+            which_player_turn,
+            state,
+            round_number,
+            chat,
+            card_to_play,
+            claims,
+        }
+    }
+}
+
+impl Display for UpdateGameDTO {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            f,
+            "Id: {}, Players: {:?}, Id of Player who needs to make a claim: {:?},
+                Game State: {:?}, Round: {:?}, 
+                Chat: {:?}, Card to Play: {:?},  Claims: {:?}",
+            self.id,
+            self.players,
+            self.which_player_turn,
+            self.state,
+            self.round_number,
+            self.chat,
+            self.card_to_play,
+            self.claims
+        )
+    }
+}
+
+impl<'a> ErrorObject<'a> for UpdateGameDTO {}
