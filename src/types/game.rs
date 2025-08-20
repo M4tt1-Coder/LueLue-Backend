@@ -197,7 +197,7 @@ impl IntoResponse for Game {
 /// - `chat` -> Potentially new chat instance
 /// - `card_to_play` -> Changes after every made round
 /// - `claims` -> List of claims in the current round
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct UpdateGameDTO {
     /// Identifier of the game is always needed.
     pub id: String,

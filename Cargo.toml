@@ -2,7 +2,7 @@
 name = "lue-lue-backend"
 version = "0.1.0"
 edition = "2021"
-authors = [ "M4tt1-Coder <matthisgeissler@gmail.com>" ]
+authors = [ "Matthis Geißler <matthisgeissler@gmail.com>" ]
 license = "MIT"
 repository = "M4tt1-Coder/LueLue-Backend"
 description = "Lue Lue Backend for the Lue Lue game"

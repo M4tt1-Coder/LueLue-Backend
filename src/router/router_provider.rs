@@ -1,9 +1,10 @@
 // use statements
-use axum::routing::{get, put};
+use axum::routing::put;
 use axum::Router;
 
 use crate::handlers::game_handlers::update_game;
 use crate::repositories::game_repository::GameRepository;
+use crate::repositories::player_repository::PlayerRepository;
 
 /// Application state for the Axum application.
 ///
@@ -14,11 +15,16 @@ use crate::repositories::game_repository::GameRepository;
 /// `db`: An instance of `D1Database` that provides access to the D1 database.:w
 ///
 #[derive(Clone)]
-pub struct AppState {
+pub struct AppState<'a> {
     // Add application state properties here, e.g., database connection, configuration, etc.
     // For example:
     // pub db: D1Database,
-    pub game_repository: GameRepository,
+    pub game_repository: GameRepository<'a>,
+
+    /// The database repository providing utility methods for interacting with the `players` table.
+    ///
+    /// Lives aslong as the app is running.
+    pub player_repository: PlayerRepository<'a>,
 }
 
 /// Router provider for the Axum application.

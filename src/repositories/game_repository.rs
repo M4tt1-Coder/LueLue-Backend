@@ -1,7 +1,14 @@
 use crate::{
     errors::database_query_error::DatabaseQueryError,
-    types::{chat::Chat, claim::Claim, game::Game, player::Player},
+    repositories::{claim_repository::ClaimsRepository, player_repository::PlayerRepository},
+    types::{
+        chat::Chat,
+        claim::Claim,
+        game::{Game, UpdateGameDTO},
+        player::Player,
+    },
 };
+use axum::{http::StatusCode, Json};
 use wasm_bindgen::JsValue;
 use worker::D1Database;
 
@@ -79,8 +86,6 @@ impl<'a> GameRepository<'a> {
         }
     }
 
-    // TODO: Add a DTO for the game update to avoid sending the whole game object
-
     /// Updates an existing game in the D1 database.
     ///
     /// # Arguments
@@ -90,27 +95,36 @@ impl<'a> GameRepository<'a> {
     /// # Returns
     ///
     /// A `Result` indicating success or failure of the operation.
-    pub async fn update_game(&self, game: Game) -> Result<Game, DatabaseQueryError<Game>> {
-        let query_result = self.db
-            .prepare(
-                "UPDATE games SET started_at = 1?, round_number = 2?, state = 3?, which_players_turn = 4?, card_to_play = 5?
-                    WHERE id = 6? 
-                    RETURNING *;",
-            )
-            .bind(&[
-                JsValue::from(game.started_at),
-                JsValue::from(game.round_number),
-                JsValue::from(game.state.index()),
-                JsValue::from(game.which_player_turn),
-                JsValue::from(game.card_to_play.index()),
-                JsValue::from(game.id),
-            ])
-            .unwrap()
-            .first::<Game>(None).await;
+    pub async fn update_game(
+        &self,
+        game_data: UpdateGameDTO,
+        player_repo: &PlayerRepository<'_>
+    ) -> Result<Game, DatabaseQueryError<UpdateGameDTO>> {
+        let (query, bindings) = self.get_update_query_string_and_bindings(&game_data);
 
+        let mut query_result = self
+            .db
+            .prepare(&query)
+            .bind(&bindings)
+            .unwrap()
+            .first::<Game>(None)
+            .await;
+
+        // TODO: Handle relations like claims, chat with other queries
+        
         match query_result {
             Ok(game) => match game {
-                Some(updated_game) => Ok(updated_game),
+                Some(mut updated_game) => {
+                    updated_game.players = match self.update_players_in_game(&game_data, &player_repo).await {
+                        Ok(players) => players,
+                        Err(err) => return Err(DatabaseQueryError::new(err.message, match err.received_data {
+                            None => None,
+                            Some(_) => Some(Json(game_data.clone()))
+                        }, err.status_code))
+                    };  
+
+                    return Ok(updated_game);
+                },
                 None => Err(DatabaseQueryError::new(
                     "Failed to update game in the database".to_string(),
                     None,
@@ -133,12 +147,12 @@ impl<'a> GameRepository<'a> {
     ///
     /// # Returns
     ///
-    /// A `Result` containing an `Option<Game>` if the game is found, or a `DatabaseQueryError` if
+    /// A `Result` containing an `Game` struct object if the game is found, or a `DatabaseQueryError` if
     /// an error occurs.
     pub async fn get_game_by_id(
         &self,
         game_id: &str,
-    ) -> Result<Option<Game>, DatabaseQueryError<Game>> {
+    ) -> Result<Game, DatabaseQueryError<Game>> {
         let query_result = self
             .db
             .prepare("SELECT * FROM games WHERE id = ?;")
@@ -149,7 +163,7 @@ impl<'a> GameRepository<'a> {
 
         match query_result {
             Ok(game) => match game {
-                Some(game) => Ok(Some(game)),
+                Some(game) => Ok(game),
                 None => Err(DatabaseQueryError::new(
                     "Game not found".to_string(),
                     None,
@@ -276,4 +290,155 @@ impl<'a> GameRepository<'a> {
             )),
         }
     }
+
+    // ----- utility functions of the 'GameRepository' struct -----
+
+    /// Combines all properties together that are directly stored in the 'games' table.
+    ///
+    /// Fields that weren't supposed to be updated aren't included.
+    ///
+    /// # Arguments
+    ///
+    /// - `game_data` -> DTO object which holds new data stored in the `games` table
+    fn get_update_query_string_and_bindings(
+        &self,
+        game_data: &UpdateGameDTO,
+    ) -> (String, Vec<JsValue>) {
+        let mut output_query = "UPDATE games SET ".to_string();
+        let mut output_bindings = vec![];
+
+        // game state
+        if let Some(state) = &game_data.state {
+            output_query.push_str("state = ?, ");
+            output_bindings.push(JsValue::from(state.index()));
+        }
+
+        // round number
+        if let Some(round) = game_data.round_number {
+            output_query.push_str("round_number = ?, ");
+            output_bindings.push(JsValue::from(round));
+        }
+
+        // card to play
+        if let Some(card) = &game_data.card_to_play {
+            output_query.push_str("card_to_play = ?, ");
+            output_bindings.push(JsValue::from(card.index()));
+        }
+
+        // which players turn it is
+        if let Some(player) = &game_data.which_player_turn {
+            output_query.push_str("which_player_turn = ?, ");
+            output_bindings.push(JsValue::from(player));
+        }
+
+        output_query.truncate(output_query.len() - 2);
+        output_query.push_str(" WHERE id = ? RETURNING *;");
+        output_bindings.push(JsValue::from(game_data.id.clone()));
+
+        (output_query, output_bindings)
+    }
+
+    /// Fetches all curent players of the game stored in the database and then determines which
+    /// entities to delete or add.
+    ///
+    /// # Returns
+    ///
+    /// - List of `Player`, which was passed to the function.
+    ///
+    /// # Arguments
+    ///
+    /// - `game_data` -> DTO object containing the list players
+    /// - `player_repo` -> Player database repository passed from the handler function
+    async fn update_players_in_game(
+        &self,
+        game_data: &UpdateGameDTO,
+        player_repo: &PlayerRepository<'_>,
+    ) -> Result<Vec<Player>, DatabaseQueryError<UpdateGameDTO>> {
+        // just to make sure that the needed data was provided
+        let new_players = match &game_data.players {
+            None => {
+                return Err(DatabaseQueryError { 
+                    message: "Function was called with invalid data passed to it! A new list of players is mandatory!".to_string(), 
+                    received_data: None, 
+                    status_code: StatusCode::INTERNAL_SERVER_ERROR 
+                });
+            },
+            Some(players) => {
+                if players.len() == 0 {
+                    return Err(DatabaseQueryError { 
+                        message: "An empty list of players was provided! That's an invalid data input!".to_string(), 
+                        received_data: None, 
+                        status_code: StatusCode::BAD_REQUEST 
+                    });
+                }
+                players
+            }
+        };
+
+        // get all players first
+        let all_current_players: Vec<Player> = match player_repo.get_all_players(Some(game_data.id.clone())).await {
+            Ok(players) => players,
+            Err(err) => {
+                return Err(DatabaseQueryError::new(
+                    err.message,
+                    match err.received_data {
+                        None => None,
+                        Some(_) => Some(Json(game_data.clone())),
+                    },
+                    err.status_code,
+                ))
+            }
+        };
+
+        // -> leave all entities that haven't changed
+        // delete all players that are not in the updated list
+        for player in all_current_players.clone() {
+            match new_players.iter().find(|&p| p.id == player.id) {
+                None => {
+                    // delete the player
+                    match player_repo.delete_player(&player.id).await {
+                        Ok(_) => continue,
+                        Err(err) => return Err(DatabaseQueryError { 
+                            message: err.message, 
+                            received_data: match err.received_data {
+                                None => None,
+                                Some(_) => Some(Json(game_data.clone()))
+                            }, 
+                            status_code: err.status_code 
+                        })
+                    };
+                } 
+                Some(_) => continue
+            }
+        }
+
+        // add new entries
+        for player in new_players {
+            match all_current_players.iter().find(|&p| p.id == player.id) {
+                None => {
+                    match player_repo.add_player(player.clone()).await {
+                        Ok(_) => continue,
+                        Err(err) => return Err(DatabaseQueryError { 
+                            message: err.message, 
+                            received_data: match err.received_data {
+                                None => None,
+                                Some(_) => Some(Json(game_data.clone()))
+                            }, 
+                            status_code: err.status_code 
+                        })
+                    }
+                }
+                Some(_) => continue
+            }
+        } 
+
+
+        // return modified list of players
+        Ok(all_current_players)
+    }
+
+    // TODO: Implement the method to update all claims of a game
+
+    /// 
+    async fn update_claims_of_game(&self, game_data: &UpdateGameDTO, claims_repo: &ClaimsRepository) -> Result<Vec<Claim>, DatabaseQueryError<UpdateGameDTO>> {}
 }

@@ -254,19 +254,39 @@ impl<'a> PlayerRepository<'a> {
 
     /// Retrieves all players from the D1 database.
     ///
+    /// # Arguments
+    ///
+    /// - `game_id` -> Optional game id after which either all players are return or just all
+    /// players in a game.
+    ///
     /// # Returns
     ///
     /// A `Result` containing a vector of `Player` instances on success, or a `DatabaseQueryError`
     /// on failure.
-    pub async fn get_all_players(&self) -> Result<Vec<Player>, DatabaseQueryError<Player>> {
-        let query_result = self
-            .db
-            .prepare("SELECT * FROM players;")
-            .bind(&[])
-            .unwrap()
-            .all()
-            .await;
-
+    pub async fn get_all_players(
+        &self,
+        game_id: Option<String>,
+    ) -> Result<Vec<Player>, DatabaseQueryError<Player>> {
+        // depending on if a game id was passed to the function -> filter for the players of a
+        // game
+        let query_result = match game_id {
+            None => {
+                self.db
+                    .prepare("SELECT * FROM players;")
+                    .bind(&[])
+                    .unwrap()
+                    .all()
+                    .await
+            }
+            Some(_game_id) => {
+                self.db
+                    .prepare("SELECT * FROM players WHERE game_id = ?;")
+                    .bind(&[JsValue::from(_game_id)])
+                    .unwrap()
+                    .all()
+                    .await
+            }
+        };
         match query_result {
             Ok(collect_players) => {
                 let mut players: Vec<Player> = match collect_players.results::<Player>() {

@@ -26,6 +26,8 @@ const MAX_CARDS_PER_CLAIM: usize = 4;
 /// - `number_of_cards`: The number of cards claimed by the player.
 #[derive(Deserialize, Serialize, Clone)]
 pub struct Claim {
+    /// Unique identifier for the claim
+    pub id: String,
     /// Id of the user that placed the claim on the stack
     pub created_by: String,
     /// Number of cards used in the claim
@@ -57,6 +59,7 @@ impl Claim {
             return Err::<Claim, BadClientRequest<Claim>>(BadClientRequest {
                 message: "The user handed in an invalid claim object!".to_string(),
                 bad_data: Json(Claim {
+                    id: "No ID".to_string(),
                     created_by: created_by.clone(),
                     number_of_cards,
                     cards: cards.clone(),
@@ -64,6 +67,7 @@ impl Claim {
             });
         };
         Ok(Claim {
+            id: uuid::Uuid::new_v4().to_string(),
             created_by,
             number_of_cards,
             cards,
@@ -76,11 +80,12 @@ impl fmt::Display for Claim {
         write!(
             f,
             "
+        Id: {},
         Created By: {},
         Number of Cards: {},
         All cards: {:?}
             ",
-            self.created_by, self.number_of_cards, self.cards
+            self.id, self.created_by, self.number_of_cards, self.cards
         )
     }
 }
@@ -90,11 +95,12 @@ impl fmt::Debug for Claim {
         write!(
             f,
             "
+        id: {},
         Created By: {},
         Number of Cards: {},
         All cards: {:?}
             ",
-            self.created_by, self.number_of_cards, self.cards
+            self.id, self.created_by, self.number_of_cards, self.cards
         )
     }
 }
