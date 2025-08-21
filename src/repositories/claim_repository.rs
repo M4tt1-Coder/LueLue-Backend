@@ -2,7 +2,11 @@ use axum::{http::StatusCode, Json};
 use wasm_bindgen::JsValue;
 use worker::D1Database;
 
-use crate::{errors::database_query_error::DatabaseQueryError, types::claim::Claim};
+use crate::{
+    errors::database_query_error::DatabaseQueryError,
+    repositories::card_repository::CardRepository,
+    types::{card::UpdateCardDTO, claim::Claim},
+};
 
 /// A database repository for interacting with the `claims` table.
 ///
@@ -63,9 +67,11 @@ impl<'a> ClaimsRepository<'a> {
     ///
     /// # Arguments
     ///
+    /// - `card_repository` -> Reference to the `CardRepository` to fetch cards associated with
+    /// claims.
     /// - `game_id` -> Optional game ID to filter claims by game.
     /// - `player_id` -> Optional player ID to filter claims by player.
-    /// /// If both are `None`, all claims will be returned.
+    /// If both are `None`, all claims will be returned.
     ///
     /// # Returns a vector of `Claim` instances or an error if the query fails.
     ///
@@ -73,6 +79,7 @@ impl<'a> ClaimsRepository<'a> {
         &self,
         game_id: Option<String>,
         player_id: Option<String>,
+        card_repository: &CardRepository<'_>,
     ) -> Result<Vec<Claim>, DatabaseQueryError<Claim>> {
         let mut query = "SELECT * FROM claims".to_string();
         let mut params: Vec<JsValue> = Vec::new();
@@ -103,8 +110,23 @@ impl<'a> ClaimsRepository<'a> {
                 };
 
                 // get all cards in the claim
-                extracted_claims.iter_mut().map(async |_claim| {
-                    // TODO: Get all cards in the claim -> utility function of the card repository
+                extracted_claims.iter_mut().map(async |claim| {
+                    let query_result = card_repository
+                        .get_all_cards(Some(claim.id.clone()), None)
+                        .await;
+
+                    claim.cards = match query_result {
+                        Ok(cards) => cards,
+                        Err(err) => {
+                            return Err(DatabaseQueryError::new(
+                                err.message,
+                                Some(Json(claim.clone())),
+                                err.status_code,
+                            ));
+                        }
+                    };
+
+                    Ok(())
                 });
 
                 Ok(extracted_claims)
@@ -122,9 +144,15 @@ impl<'a> ClaimsRepository<'a> {
     /// # Arguments
     ///
     /// - `claim` -> The `Claim` struct to be inserted into the database.
+    /// - `card_repository` -> Reference to the `CardRepository` to handle cards associated with
+    /// the claim.
     ///
     /// # Returns a `Claim` instance if the insertion is successful, or an error if it fails.
-    pub async fn create_claim(&self, claim: Claim) -> Result<Claim, DatabaseQueryError<Claim>> {
+    pub async fn create_claim(
+        &self,
+        claim: Claim,
+        card_repository: &CardRepository<'_>,
+    ) -> Result<Claim, DatabaseQueryError<Claim>> {
         let query =
             "INSERT INTO claims (id, created_by, number_of_cards, cards) VALUES (?, ?, ?, ?);";
         let params = vec![
@@ -137,7 +165,27 @@ impl<'a> ClaimsRepository<'a> {
 
         // cards need to be stored separatly
         for card in &claim.cards {
-            // TODO: Add each card to the database by using the card repository
+            let res = card_repository
+                .update_card(
+                    match UpdateCardDTO::new(card.id.clone(), None, None, Some(claim.id.clone())) {
+                        Ok(update_card) => update_card,
+                        Err(err) => {
+                            return Err(DatabaseQueryError::new(
+                                err.message,
+                                Some(Json(claim.clone())),
+                                StatusCode::INTERNAL_SERVER_ERROR,
+                            ));
+                        }
+                    },
+                )
+                .await;
+            if let Err(err) = res {
+                return Err(DatabaseQueryError::new(
+                    err.message,
+                    Some(Json(claim.clone())),
+                    err.status_code,
+                ));
+            }
         }
 
         match query_result {
