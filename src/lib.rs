@@ -1,23 +1,44 @@
-use axum::{routing::get, Router};
+// crates inclusion
+pub mod enums;
+pub mod errors;
+pub mod handlers;
+pub mod logic;
+pub mod middleware;
+pub mod repositories;
+pub mod router;
+pub mod status;
+pub mod types;
+pub mod utils;
+
+// Include the necessary dependencies
+use log::warn;
 use tower_service::Service;
 use worker::*;
 
-fn router() -> Router {
-    Router::new().route("/", get(root))
-}
+use crate::{
+    repositories::game_repository::GameRepository,
+    router::router_provider::{self, AppState},
+};
 
 #[event(fetch)]
 async fn fetch(
     req: HttpRequest,
-    _env: Env,
+    env: Env,
     _ctx: Context,
 ) -> Result<axum::http::Response<axum::body::Body>> {
-    console_error_panic_hook::set_once();
-    Ok(router().call(req).await?)
-}
+    // TODO: Set up database repositories for all types relevant for direct data exchange
 
-pub async fn root() -> &'static str {
-    "Buddne!"
+    // Get the database binding -> access to D1 database
+    let _database = env.d1("DB").map_err(|err| {
+        warn!("{err}");
+        worker::Error::RustError("DB binding not found".to_string())
+    })?;
+    console_error_panic_hook::set_once();
+    Ok(router_provider::router(AppState {
+        game_repository: GameRepository::new(&_database),
+    })
+    .call(req)
+    .await?)
 }
 
 // Documentation
@@ -26,8 +47,14 @@ pub async fn root() -> &'static str {
 // prod URL
 // -> https://lue-lue-backend.geimat75.workers.dev/
 
-// needed endpoints
-// 
+// event emitter
+// send server-sent events from the backend to the frontend
+//
+// nextjs -> EventSource API
+// // https://developers.cloudflare.com/workers/runtime-apis/events/#server-sent-events
+
+// necessary endpoints
+//
 
 // git feature branches _______
 // utils -> implement util functions
@@ -35,3 +62,4 @@ pub async fn root() -> &'static str {
 // refactor -> refactor code
 // => all are merge into dev
 
+// TODO: Need extra thread for checking if a player is offline and discard him / her from the game
