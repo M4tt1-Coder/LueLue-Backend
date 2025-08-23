@@ -1,5 +1,3 @@
-// TODO: Implement the 'Card' repository methods
-
 use axum::{http::StatusCode, Json};
 use wasm_bindgen::JsValue;
 use worker::D1Database;

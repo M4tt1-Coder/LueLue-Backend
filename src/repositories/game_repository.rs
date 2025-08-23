@@ -1,6 +1,6 @@
 use crate::{
     errors::database_query_error::DatabaseQueryError,
-    repositories::{claim_repository::ClaimsRepository, player_repository::PlayerRepository},
+    repositories::{card_repository::CardRepository, claim_repository::ClaimsRepository, player_repository::PlayerRepository},
     types::{
         chat::Chat,
         claim::Claim,
@@ -98,7 +98,8 @@ impl<'a> GameRepository<'a> {
     pub async fn update_game(
         &self,
         game_data: UpdateGameDTO,
-        player_repo: &PlayerRepository<'_>
+        player_repo: &PlayerRepository<'_>,
+        card_repo: &CardRepository<'_>
     ) -> Result<Game, DatabaseQueryError<UpdateGameDTO>> {
         let (query, bindings) = self.get_update_query_string_and_bindings(&game_data);
 
@@ -115,7 +116,7 @@ impl<'a> GameRepository<'a> {
         match query_result {
             Ok(game) => match game {
                 Some(mut updated_game) => {
-                    updated_game.players = match self.update_players_in_game(&game_data, &player_repo).await {
+                    updated_game.players = match self.update_players_in_game(&game_data, &player_repo, card_repo).await {
                         Ok(players) => players,
                         Err(err) => return Err(DatabaseQueryError::new(err.message, match err.received_data {
                             None => None,
@@ -353,6 +354,7 @@ impl<'a> GameRepository<'a> {
         &self,
         game_data: &UpdateGameDTO,
         player_repo: &PlayerRepository<'_>,
+        card_repo: &CardRepository<'_>
     ) -> Result<Vec<Player>, DatabaseQueryError<UpdateGameDTO>> {
         // just to make sure that the needed data was provided
         let new_players = match &game_data.players {
@@ -376,7 +378,7 @@ impl<'a> GameRepository<'a> {
         };
 
         // get all players first
-        let all_current_players: Vec<Player> = match player_repo.get_all_players(Some(game_data.id.clone())).await {
+        let all_current_players: Vec<Player> = match player_repo.get_all_players(Some(game_data.id.clone()), card_repo).await {
             Ok(players) => players,
             Err(err) => {
                 return Err(DatabaseQueryError::new(
@@ -440,5 +442,5 @@ impl<'a> GameRepository<'a> {
     // TODO: Implement the method to update all claims of a game
 
     /// 
-    async fn update_claims_of_game(&self, game_data: &UpdateGameDTO, claims_repo: &ClaimsRepository) -> Result<Vec<Claim>, DatabaseQueryError<UpdateGameDTO>> {}
+    async fn update_claims_of_game(&self, game_data: &UpdateGameDTO, claims_repo: &ClaimsRepository<'_>) -> Result<Vec<Claim>, DatabaseQueryError<UpdateGameDTO>> {}
 }

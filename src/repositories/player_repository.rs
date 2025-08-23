@@ -1,8 +1,10 @@
+use axum::Json;
 use wasm_bindgen::JsValue;
 use worker::D1Database;
 
 use crate::{
     errors::database_query_error::DatabaseQueryError,
+    repositories::card_repository::CardRepository,
     types::player::{Player, UpdatePlayerDTO},
 };
 
@@ -258,6 +260,7 @@ impl<'a> PlayerRepository<'a> {
     ///
     /// - `game_id` -> Optional game id after which either all players are return or just all
     /// players in a game.
+    /// - `card_repository` -> Reference to the `CardRepository` to fetch cards associated with
     ///
     /// # Returns
     ///
@@ -266,6 +269,7 @@ impl<'a> PlayerRepository<'a> {
     pub async fn get_all_players(
         &self,
         game_id: Option<String>,
+        card_repository: &CardRepository<'_>,
     ) -> Result<Vec<Player>, DatabaseQueryError<Player>> {
         // depending on if a game id was passed to the function -> filter for the players of a
         // game
@@ -299,8 +303,22 @@ impl<'a> PlayerRepository<'a> {
                         ));
                     }
                 };
-
-                // TODO: property 'assigned_cards' needs to be fetched separately
+                // for each player, fetch their assigned cards
+                for player in players.iter_mut() {
+                    player.assigned_cards = match card_repository
+                        .get_all_cards(None, Some(player.id.clone()))
+                        .await
+                    {
+                        Ok(cards) => cards,
+                        Err(err) => {
+                            return Err(DatabaseQueryError::new(
+                                err.to_string(),
+                                Some(Json(player.clone())),
+                                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                            ));
+                        }
+                    };
+                }
 
                 if players.is_empty() {
                     Err(DatabaseQueryError::new(
